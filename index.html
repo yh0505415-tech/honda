@@ -311,16 +311,74 @@
         .route-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .route-item { background-color: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; }
         
-        /* 送金ルート内のレイアウト構造 */
         .route-flow { display: flex; align-items: center; flex-wrap: wrap; }
         .route-member-block { display: flex; flex-direction: column; }
         .route-user { font-weight: 600; font-size: 15px; }
-        
-        /* 修正点：名前の下に表示する薄く小さな内訳テキスト */
         .route-member-breakdown { font-size: 10px; color: #94a3b8; font-weight: normal; margin-top: 1px; }
         
         .route-arrow { color: var(--text-muted); margin: 0 10px; font-size: 13px; align-self: flex-start; margin-top: 4px; }
         .route-amount { font-weight: 800; color: var(--accent-orange); font-size: 16px; }
+
+        /* ==========================================
+           新設：カスタムポップアップ（モーダル）CSS
+           ========================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 45, 66, 0.6); /* メインテキスト色の半透明 */
+            backdrop-filter: blur(4px); /* 背景をわずかにぼかす高級感演出 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 85%;
+            max-width: 340px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            transform: scale(0.9);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+        .modal-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .modal-card p {
+            font-size: 15px;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            font-weight: 600;
+            white-space: pre-wrap; /* 改行対応 */
+        }
+        .modal-card button {
+            background-color: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
+        .modal-card button:hover {
+            background-color: #ca654a;
+        }
     </style>
 </head>
 <body>
@@ -457,11 +515,32 @@
     </div>
 </div>
 
+<div id="customAlert" class="modal-overlay">
+    <div class="modal-card">
+        <span id="modalIcon" class="modal-icon">💡</span>
+        <p id="customAlertMessage">メッセージ内容</p>
+        <button onclick="closeAlert()">確認</button>
+    </div>
+</div>
+
 <script>
     let members = [];         
     let generalExpenses = []; 
     let carExpenses = [];     
     let lastShareText = ""; 
+
+    /* ==========================================
+       新設：自作アラート開閉ロジック (URL非表示用)
+       ========================================== */
+    function openAlert(message, icon = "💡") {
+        document.getElementById('customAlertMessage').innerText = message;
+        document.getElementById('modalIcon').innerText = icon;
+        document.getElementById('customAlert').classList.add('active');
+    }
+
+    function closeAlert() {
+        document.getElementById('customAlert').classList.remove('active');
+    }
 
     function toggleAlcoholSwitch() {
         const cb = document.getElementById('isAlcohol');
@@ -472,7 +551,7 @@
         const nameInput = document.getElementById('memberName');
         const name = nameInput.value.trim();
         if (!name) return;
-        if (members.some(m => m.name === name)) return alert('同名のメンバーが存在します');
+        if (members.some(m => m.name === name)) return openAlert('同名のメンバーが既に登録されています。', '⚠️');
         members.push({ name: name, drinksAlcohol: true });
         nameInput.value = '';
         updateUI();
@@ -546,14 +625,14 @@
         let passengers = [];
         passengerBoxes.forEach(box => passengers.push(box.value));
 
-        if (!driver) return alert('運転手を選択してください');
+        if (!driver) return openAlert('運転手を選択してください。', '🚗');
         let gas = 0;
         if (distance > 0 && efficiency > 0 && gasPrice > 0) {
             gas = Math.round((distance / efficiency) * gasPrice);
         }
         const total = expressway + gas;
-        if (total <= 0) return alert('費用または計算用パラメータを入力してください');
-        if (passengers.length === 0) return alert('乗員を1人以上選択してください');
+        if (total <= 0) return openAlert('高速代、またはガソリン代のパラメータ（距離等）を入力してください。', '💸');
+        if (passengers.length === 0) return openAlert('この車に乗った同乗者を1人以上選択してください。', '👥');
 
         carExpenses.push({ driver, expressway, gas, total, passengers });
         document.getElementById('carDriverSelect').value = '';
@@ -592,10 +671,10 @@
         const isAlcohol = document.getElementById('isAlcohol').checked;
 
         if (!payer || !title || isNaN(amount) || amount <= 0) {
-            return alert('すべての項目を正しく入力してください');
+            return openAlert('支払った人・項目・金額を正しく入力してください。', '⚠️');
         }
         if (isAlcohol && !members.some(m => m.drinksAlcohol)) {
-            return alert('「お酒を飲む」メンバーがチェックされていません');
+            return openAlert('お酒を飲むメンバーが1人もチェックされていません。', '🍺');
         }
 
         generalExpenses.push({ payer, title, amount, isAlcohol });
@@ -628,7 +707,7 @@
     }
 
     function calculateSettlement() {
-        if (members.length < 2) return alert('メンバーを2人以上追加してください');
+        if (members.length < 2) return openAlert('精算を計算するにはメンバーを2人以上追加してください。', '👥');
         
         let balances = {};
         let itemizedBreakdown = {}; 
@@ -685,9 +764,8 @@
             });
         });
 
-        // コピー用のプレーンテキスト内訳の組み立て
         let textBreakdown = "［各自の精算内訳］\n";
-        let inlineStylesMap = {}; // JS内で各メンバーの薄いテキスト用の文字列を事前に生成してマップ化
+        let inlineStylesMap = {}; 
 
         for (let name in itemizedBreakdown) {
             let b = itemizedBreakdown[name];
@@ -699,12 +777,9 @@
             let fTotal = (totalNet >= 0 ? "+" : "") + Math.round(totalNet).toLocaleString();
 
             textBreakdown += ` ${name}: 共通:${fGen} / お酒:${fAlc} / 移動:${fCar} ➡️ 計 ${fTotal}円\n`;
-            
-            // 画面表示用の小さな文字列を作成
             inlineStylesMap[name] = `共通:${fGen} | お酒:${fAlc} | 移動:${fCar}`;
         }
 
-        // 最短送金ルート算出
         let debtors = [];
         let creditors = [];
         for (let name in balances) {
@@ -724,7 +799,6 @@
             let amount = Math.min(debtor.amount, creditor.amount);
             let finalAmt = Math.round(amount);
 
-            // 修正箇所：各送金ルートメンバーの名前の下に、生成しておいた個別内訳（inlineStylesMap）を薄く小さく配置
             htmlResults += `
                 <div class="route-item">
                     <div class="route-flow">
@@ -751,7 +825,7 @@
         }
 
         const grandTotal = totalGeneral + totalAlcohol + totalCar;
-        if (grandTotal === 0) return alert('精算するデータがありません');
+        if (grandTotal === 0) return openAlert('精算するデータがまだ入力されていません。', '📝');
 
         document.getElementById('sumGeneral').innerText = totalGeneral.toLocaleString() + "円";
         document.getElementById('sumAlcohol').innerText = totalAlcohol.toLocaleString() + "円";
@@ -790,7 +864,7 @@
                 btn.classList.remove('copied');
             }, 2000);
         }).catch(err => {
-            alert('コピーに失敗しました。');
+            openAlert('クリップボードへのコピーに失敗しました。ブラウザの権限を確認してください。', '⚠️');
         });
     }
 </script>
