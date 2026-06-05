@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAMPMASTER - スマートキャンプ精算</title>
+    <style>
+        :root {
+            --bg-main: #f4f6f0;
+            --bg-card: #ffffff;
+            --primary: #2c4c38;
+            --primary-light: #f0f4f1;
+            --accent-orange: #e07a5f;
+            --accent-blue: #3d5a80;
+            --text-main: #2b2d42;
+            --text-muted: #6c757d;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 24px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(44, 76, 56, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        .card h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h2 span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.last {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: var(--font);
+            font-size: 15px;
+            color: var(--text-main);
+            background-color: #fafafa;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--primary);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(44, 76, 56, 0.08);
+        }
+
+        .flex-inputs {
+            display: flex;
+            gap: 12px;
+        }
+
+        .flex-inputs > * {
+            flex: 1;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .toggle-wrapper {
+            background-color: #fafafa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-orange);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .passenger-container {
+            background-color: #fafafa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 48px;
+        }
+
+        .chips-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip-checkbox {
+            display: none;
+        }
+
+        .chip-btn {
+            display: inline-block;
+            padding: 6px 14px;
+            background-color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .chip-checkbox:checked + .chip-btn {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        .placeholder-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+            width: 100%;
+            padding: 4px 0;
+        }
+
+        button {
+            width: 100%;
+            font-family: var(--font);
+            padding: 13px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: #1e3527; }
+        .btn-blue { background-color: var(--accent-blue); color: white; }
+        .btn-blue:hover { background-color: #2b4260; }
+        .btn-orange { background-color: var(--accent-orange); color: white; font-size: 16px; padding: 15px; }
+        .btn-orange:hover { background-color: #ca654a; }
+        
+        .btn-copy { background-color: #4a5568; color: white; margin-top: 14px; }
+        .btn-copy:hover { background-color: #2d3748; }
+        .btn-copy.copied { background-color: var(--primary) !important; }
+
+        ul { list-style: none; margin-top: 14px; }
+        li {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .list-item-main { display: flex; flex-direction: column; gap: 2px; }
+        .list-item-title { font-weight: 600; }
+        .list-item-sub { font-size: 11px; color: var(--text-muted); }
+        .btn-delete { background: none; padding: 4px 8px; width: auto; color: #e53e3e; font-size: 12px; font-weight: 500; }
+        .btn-delete:hover { background-color: #fff5f5; color: #c53030; }
+
+        .member-meta { display: flex; align-items: center; gap: 12px; }
+        .alcohol-check-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
+
+        .result-container { display: none; margin-top: 24px; border-top: 2px dashed var(--border); padding-top: 24px; }
+        .summary-card { background-color: var(--primary-light); border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 6px; }
+        .summary-row.total { margin-bottom: 0; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(44, 76, 56, 0.15); font-size: 16px; font-weight: 800; color: var(--primary); }
+
+        .route-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .route-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .route-item { background-color: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; }
+        
+        /* 送金ルート内のレイアウト構造 */
+        .route-flow { display: flex; align-items: center; flex-wrap: wrap; }
+        .route-member-block { display: flex; flex-direction: column; }
+        .route-user { font-weight: 600; font-size: 15px; }
+        
+        /* 修正点：名前の下に表示する薄く小さな内訳テキスト */
+        .route-member-breakdown { font-size: 10px; color: #94a3b8; font-weight: normal; margin-top: 1px; }
+        
+        .route-arrow { color: var(--text-muted); margin: 0 10px; font-size: 13px; align-self: flex-start; margin-top: 4px; }
+        .route-amount { font-weight: 800; color: var(--accent-orange); font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⛺ CAMPMASTER</h1>
+        <p>シンプル＆高機能なグループ割り勘精算システム</p>
+    </header>
+
+    <div class="card">
+        <h2><span>1</span>メンバー登録</h2>
+        <div class="form-group last">
+            <div class="flex-inputs">
+                <input type="text" id="memberName" placeholder="名前を入力 (例: Aさん)" autocomplete="off">
+                <button class="btn-primary" style="flex: 0 0 80px;" onclick="addMember()">追加</button>
+            </div>
+        </div>
+        <ul id="memberList"></ul>
+    </div>
+
+    <div class="card">
+        <h2><span>2</span>車・移動費の登録</h2>
+        <div class="form-group">
+            <div class="flex-inputs">
+                <div style="flex: 1.2;">
+                    <label>運転手（立替人）</label>
+                    <select id="carDriverSelect">
+                        <option value="">選択してください...</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>高速代 (円)</label>
+                    <input type="number" id="expresswayFee" placeholder="0" min="0">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>ガソリン代自動計算（不要な場合は未入力でOK）</label>
+            <div class="grid-3">
+                <div>
+                    <input type="number" id="carDistance" placeholder="距離(km)" min="0" step="0.1">
+                </div>
+                <div>
+                    <input type="number" id="carEfficiency" placeholder="燃費(km/L)" min="0" step="0.1">
+                </div>
+                <div>
+                    <input type="number" id="carGasPrice" placeholder="単価(円)" min="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>この車に乗った人（割り勘対象）</label>
+            <div class="passenger-container">
+                <div class="chips-grid" id="passengerSelector">
+                    <div class="placeholder-text">メンバーを登録すると選択可能になります</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-blue" onclick="addCarExpense()">移動費をリストに追加</button>
+        <ul id="carExpenseList"></ul>
+    </div>
+
+    <div class="card">
+        <h2><span>3</span>その他支出の登録</h2>
+        <div class="form-group">
+            <div class="flex-inputs">
+                <div style="flex: 1.2;">
+                    <label>支払った人</label>
+                    <select id="payerSelect">
+                        <option value="">選択してください...</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>金額 (円)</label>
+                    <input type="number" id="expenseAmount" placeholder="0" min="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>購入項目</label>
+            <input type="text" id="expenseTitle" placeholder="例: 食材、薪、コテージ代" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <div class="toggle-wrapper" onclick="toggleAlcoholSwitch()">
+                <div class="toggle-label">
+                    <span>🍺</span> これは「お酒代」として登録
+                </div>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="isAlcohol">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="addGeneralExpense()">支出をリストに追加</button>
+        <ul id="generalExpenseList"></ul>
+    </div>
+
+    <div class="card">
+        <h2><span>4</span>精算の計算</h2>
+        <button class="btn-orange" onclick="calculateSettlement()">精算</button>
+        
+        <div id="resultContainer" class="result-container">
+            <div class="summary-card">
+                <div class="summary-row">
+                    <span style="color:var(--text-muted);">共通割り勘総額:</span>
+                    <span id="sumGeneral">0円</span>
+                </div>
+                <div class="summary-row">
+                    <span style="color:var(--text-muted);">お酒代総額:</span>
+                    <span id="sumAlcohol">0円</span>
+                </div>
+                <div class="summary-row">
+                    <span style="color:var(--text-muted);">移動費総額:</span>
+                    <span id="sumCar">0円</span>
+                </div>
+                <div class="summary-row total">
+                    <span>総支出額:</span>
+                    <span id="sumGrand">0円</span>
+                </div>
+            </div>
+
+            <div class="route-title">最適化された送金ルート</div>
+            <div class="route-list" id="settlementResult"></div>
+            
+            <button id="copyBtn" class="btn-copy" onclick="copyToClipboard()">📋 精算テキストをコピー</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let members = [];         
+    let generalExpenses = []; 
+    let carExpenses = [];     
+    let lastShareText = ""; 
+
+    function toggleAlcoholSwitch() {
+        const cb = document.getElementById('isAlcohol');
+        cb.checked = !cb.checked;
+    }
+
+    function addMember() {
+        const nameInput = document.getElementById('memberName');
+        const name = nameInput.value.trim();
+        if (!name) return;
+        if (members.some(m => m.name === name)) return alert('同名のメンバーが存在します');
+        members.push({ name: name, drinksAlcohol: true });
+        nameInput.value = '';
+        updateUI();
+    }
+
+    function deleteMember(index) {
+        const removed = members[index].name;
+        members.splice(index, 1);
+        generalExpenses = generalExpenses.filter(e => e.payer !== removed);
+        carExpenses = carExpenses.filter(c => c.driver !== removed).map(c => {
+            c.passengers = c.passengers.filter(p => p !== removed);
+            return c;
+        });
+        updateUI();
+        renderGeneralExpenses();
+        renderCarExpenses();
+    }
+
+    function toggleAlcohol(index) {
+        members[index].drinksAlcohol = !members[index].drinksAlcohol;
+    }
+
+    function updateUI() {
+        const memberList = document.getElementById('memberList');
+        memberList.innerHTML = '';
+        members.forEach((m, idx) => {
+            memberList.innerHTML += `
+                <li>
+                    <span class="list-item-title">${m.name}</span>
+                    <div class="member-meta">
+                        <label class="alcohol-check-label">
+                            <input type="checkbox" ${m.drinksAlcohol ? 'checked' : ''} onchange="toggleAlcohol(${idx})"> お酒飲む
+                        </label>
+                        <button class="btn-delete" onclick="deleteMember(${idx})">削除</button>
+                    </div>
+                </li>`;
+        });
+
+        const carDriverSelect = document.getElementById('carDriverSelect');
+        const payerSelect = document.getElementById('payerSelect');
+        carDriverSelect.innerHTML = '<option value="">選択してください...</option>';
+        payerSelect.innerHTML = '<option value="">選択してください...</option>';
+        
+        members.forEach(m => {
+            carDriverSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`;
+            payerSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`;
+        });
+
+        const passengerSelector = document.getElementById('passengerSelector');
+        if (members.length === 0) {
+            passengerSelector.innerHTML = '<div class="placeholder-text">メンバーを登録すると選択可能になります</div>';
+        } else {
+            passengerSelector.innerHTML = '';
+            members.forEach((m, idx) => {
+                passengerSelector.innerHTML += `
+                    <label>
+                        <input type="checkbox" class="chip-checkbox" name="carPassengers" value="${m.name}">
+                        <span class="chip-btn">${m.name}</span>
+                    </label>`;
+            });
+        }
+    }
+
+    function addCarExpense() {
+        const driver = document.getElementById('carDriverSelect').value;
+        const expressway = parseInt(document.getElementById('expresswayFee').value) || 0;
+        const distance = parseFloat(document.getElementById('carDistance').value) || 0;
+        const efficiency = parseFloat(document.getElementById('carEfficiency').value) || 0;
+        const gasPrice = parseInt(document.getElementById('carGasPrice').value) || 0;
+        const passengerBoxes = document.querySelectorAll('input[name="carPassengers"]:checked');
+        let passengers = [];
+        passengerBoxes.forEach(box => passengers.push(box.value));
+
+        if (!driver) return alert('運転手を選択してください');
+        let gas = 0;
+        if (distance > 0 && efficiency > 0 && gasPrice > 0) {
+            gas = Math.round((distance / efficiency) * gasPrice);
+        }
+        const total = expressway + gas;
+        if (total <= 0) return alert('費用または計算用パラメータを入力してください');
+        if (passengers.length === 0) return alert('乗員を1人以上選択してください');
+
+        carExpenses.push({ driver, expressway, gas, total, passengers });
+        document.getElementById('carDriverSelect').value = '';
+        document.getElementById('expresswayFee').value = '';
+        document.getElementById('carDistance').value = '';
+        document.getElementById('carEfficiency').value = '';
+        document.getElementById('carGasPrice').value = '';
+        document.querySelectorAll('input[name="carPassengers"]:checked').forEach(box => box.checked = false);
+        renderCarExpenses();
+    }
+
+    function deleteCarExpense(idx) {
+        carExpenses.splice(idx, 1);
+        renderCarExpenses();
+    }
+
+    function renderCarExpenses() {
+        const list = document.getElementById('carExpenseList');
+        list.innerHTML = '';
+        carExpenses.forEach((c, idx) => {
+            list.innerHTML += `
+                <li>
+                    <div class="list-item-main">
+                        <span class="list-item-title">${c.driver} 立替: ${c.total.toLocaleString()}円</span>
+                        <span class="list-item-sub">内訳(高速:${c.expressway.toLocaleString()}円 / 燃料:${c.gas.toLocaleString()}円) ・ 乗員: ${c.passengers.join(', ')}</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteCarExpense(${idx})">削除</button>
+                </li>`;
+        });
+    }
+
+    function addGeneralExpense() {
+        const payer = document.getElementById('payerSelect').value;
+        const title = document.getElementById('expenseTitle').value.trim();
+        const amount = parseInt(document.getElementById('expenseAmount').value);
+        const isAlcohol = document.getElementById('isAlcohol').checked;
+
+        if (!payer || !title || isNaN(amount) || amount <= 0) {
+            return alert('すべての項目を正しく入力してください');
+        }
+        if (isAlcohol && !members.some(m => m.drinksAlcohol)) {
+            return alert('「お酒を飲む」メンバーがチェックされていません');
+        }
+
+        generalExpenses.push({ payer, title, amount, isAlcohol });
+        document.getElementById('payerSelect').value = '';
+        document.getElementById('expenseTitle').value = '';
+        document.getElementById('expenseAmount').value = '';
+        document.getElementById('isAlcohol').checked = false;
+        renderGeneralExpenses();
+    }
+
+    function deleteGeneralExpense(idx) {
+        generalExpenses.splice(idx, 1);
+        renderGeneralExpenses();
+    }
+
+    function renderGeneralExpenses() {
+        const list = document.getElementById('generalExpenseList');
+        list.innerHTML = '';
+        generalExpenses.forEach((e, idx) => {
+            const typeStr = e.isAlcohol ? '🍺 お酒代' : '⛺ 共通';
+            list.innerHTML += `
+                <li>
+                    <div class="list-item-main">
+                        <span class="list-item-title">${e.payer} 立替: ${e.amount.toLocaleString()}円</span>
+                        <span class="list-item-sub">[${typeStr}] ${e.title}</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteGeneralExpense(${idx})">削除</button>
+                </li>`;
+        });
+    }
+
+    function calculateSettlement() {
+        if (members.length < 2) return alert('メンバーを2人以上追加してください');
+        
+        let balances = {};
+        let itemizedBreakdown = {}; 
+        
+        members.forEach(m => {
+            balances[m.name] = 0;
+            itemizedBreakdown[m.name] = { general: 0, alcohol: 0, car: 0 };
+        });
+
+        let totalGeneral = 0;
+        let totalAlcohol = 0;
+        let totalCar = 0;
+
+        generalExpenses.forEach(e => { 
+            balances[e.payer] += e.amount; 
+            if (!e.isAlcohol) {
+                itemizedBreakdown[e.payer].general += e.amount;
+            } else {
+                itemizedBreakdown[e.payer].alcohol += e.amount;
+            }
+        });
+        carExpenses.forEach(c => { 
+            balances[c.driver] += c.total; 
+            itemizedBreakdown[c.driver].car += c.total;
+        });
+
+        generalExpenses.forEach(e => {
+            if (!e.isAlcohol) {
+                totalGeneral += e.amount;
+                const share = e.amount / members.length;
+                members.forEach(m => { 
+                    balances[m.name] -= share; 
+                    itemizedBreakdown[m.name].general -= share;
+                });
+            } else {
+                totalAlcohol += e.amount;
+                const drinkingMembers = members.filter(m => m.drinksAlcohol);
+                const share = e.amount / drinkingMembers.length;
+                drinkingMembers.forEach(m => { 
+                    balances[m.name] -= share; 
+                    itemizedBreakdown[m.name].alcohol -= share;
+                });
+            }
+        });
+
+        carExpenses.forEach(c => {
+            totalCar += c.total;
+            const share = c.total / c.passengers.length;
+            c.passengers.forEach(pName => {
+                if (balances[pName] !== undefined) {
+                    balances[pName] -= share;
+                    itemizedBreakdown[pName].car -= share;
+                }
+            });
+        });
+
+        // コピー用のプレーンテキスト内訳の組み立て
+        let textBreakdown = "［各自の精算内訳］\n";
+        let inlineStylesMap = {}; // JS内で各メンバーの薄いテキスト用の文字列を事前に生成してマップ化
+
+        for (let name in itemizedBreakdown) {
+            let b = itemizedBreakdown[name];
+            let totalNet = b.general + b.alcohol + b.car;
+            
+            let fGen = (b.general >= 0 ? "+" : "") + Math.round(b.general).toLocaleString();
+            let fAlc = (b.alcohol >= 0 ? "+" : "") + Math.round(b.alcohol).toLocaleString();
+            let fCar = (b.car >= 0 ? "+" : "") + Math.round(b.car).toLocaleString();
+            let fTotal = (totalNet >= 0 ? "+" : "") + Math.round(totalNet).toLocaleString();
+
+            textBreakdown += ` ${name}: 共通:${fGen} / お酒:${fAlc} / 移動:${fCar} ➡️ 計 ${fTotal}円\n`;
+            
+            // 画面表示用の小さな文字列を作成
+            inlineStylesMap[name] = `共通:${fGen} | お酒:${fAlc} | 移動:${fCar}`;
+        }
+
+        // 最短送金ルート算出
+        let debtors = [];
+        let creditors = [];
+        for (let name in balances) {
+            if (balances[name] < -0.1) {
+                debtors.push({ name: name, amount: Math.abs(balances[name]) });
+            } else if (balances[name] > 0.1) {
+                creditors.push({ name: name, amount: balances[name] });
+            }
+        }
+
+        let htmlResults = "";
+        let textResults = []; 
+        let d = 0, c = 0;
+        while (d < debtors.length && c < creditors.length) {
+            let debtor = debtors[d];
+            let creditor = creditors[c];
+            let amount = Math.min(debtor.amount, creditor.amount);
+            let finalAmt = Math.round(amount);
+
+            // 修正箇所：各送金ルートメンバーの名前の下に、生成しておいた個別内訳（inlineStylesMap）を薄く小さく配置
+            htmlResults += `
+                <div class="route-item">
+                    <div class="route-flow">
+                        <div class="route-member-block">
+                            <span class="route-user">${debtor.name}</span>
+                            <span class="route-member-breakdown">${inlineStylesMap[debtor.name]}</span>
+                        </div>
+                        <span class="route-arrow">➡️</span>
+                        <div class="route-member-block">
+                            <span class="route-user">${creditor.name}</span>
+                            <span class="route-member-breakdown">${inlineStylesMap[creditor.name]}</span>
+                        </div>
+                    </div>
+                    <div class="route-amount">${finalAmt.toLocaleString()}円</div>
+                </div>`;
+                
+            textResults.push(`${debtor.name} ➡️ ${creditor.name} に ${finalAmt.toLocaleString()}円 支払う`);
+
+            debtor.amount -= amount;
+            creditor.amount -= amount;
+
+            if (debtor.amount < 0.1) d++;
+            if (creditor.amount < 0.1) c++;
+        }
+
+        const grandTotal = totalGeneral + totalAlcohol + totalCar;
+        if (grandTotal === 0) return alert('精算するデータがありません');
+
+        document.getElementById('sumGeneral').innerText = totalGeneral.toLocaleString() + "円";
+        document.getElementById('sumAlcohol').innerText = totalAlcohol.toLocaleString() + "円";
+        document.getElementById('sumCar').innerText = totalCar.toLocaleString() + "円";
+        document.getElementById('sumGrand').innerText = grandTotal.toLocaleString() + "円";
+
+        lastShareText = `【⛺ キャンプ精算結果】\n`;
+        lastShareText += `総支出: ${grandTotal.toLocaleString()}円\n`;
+        lastShareText += `(共通: ${totalGeneral.toLocaleString()}円 / お酒: ${totalAlcohol.toLocaleString()}円 / 移動費: ${totalCar.toLocaleString()}円)\n`;
+        lastShareText += `----------------------------\n`;
+        lastShareText += textBreakdown;
+        lastShareText += `----------------------------\n`;
+        lastShareText += `［送金ルート］\n`;
+
+        const resultDiv = document.getElementById('settlementResult');
+        if (htmlResults === "") {
+            resultDiv.innerHTML = '<div class="placeholder-text" style="padding:10px 0;">全員の精算バランスが一致しています。送金は不要です！</div>';
+            lastShareText += ' 全員の精算バランスが一致しています。送金は不要です！';
+        } else {
+            resultDiv.innerHTML = htmlResults;
+            textResults.forEach(res => { lastShareText += ` ${res}\n`; });
+        }
+
+        document.getElementById('resultContainer').style.display = 'block';
+    }
+
+    function copyToClipboard() {
+        if (!lastShareText) return;
+        const btn = document.getElementById('copyBtn');
+
+        navigator.clipboard.writeText(lastShareText).then(() => {
+            btn.innerText = "✅ 精算テキストをコピーしました！";
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerText = "📋 精算テキストをコピー";
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            alert('コピーに失敗しました。');
+        });
+    }
+</script>
+</body>
+</html>
