@@ -308,26 +308,20 @@
         .summary-row.total { margin-bottom: 0; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(44, 76, 56, 0.15); font-size: 16px; font-weight: 800; color: var(--primary); }
 
         .route-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .route-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .route-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         
-        /* 送金ルートカード全体のレイアウト */
-        .route-item { background-color: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 15px; }
+        /* 修正・最適化：完全に縦型フローに特化したカードデザイン */
+        .route-item { background-color: #fafafa; border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 15px; }
+        .route-flow { display: flex; flex-direction: column; align-items: center; width: 100%; text-align: center; gap: 4px; }
+        .route-member-block { display: flex; flex-direction: column; align-items: center; width: 100%; }
         
-        /* 構造の修正：中央寄せで綺麗に対称構造にする */
-        .route-flow { display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: center; }
-        .route-member-block { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+        .route-user { font-weight: 700; font-size: 15px; color: var(--text-main); }
+        .route-member-breakdown { font-size: 10px; color: #94a3b8; font-weight: normal; margin-top: 1px; }
         
-        /* 払い手側は左寄せ、もらい手側は右寄せ */
-        .route-member-block.debtor { text-align: left; }
-        .route-member-block.creditor { text-align: right; }
-        
-        .route-user { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .route-member-breakdown { font-size: 10px; color: #94a3b8; font-weight: normal; margin-top: 2px; white-space: nowrap; }
-        
-        /* 修正：矢印と金額を格納する中央のブロック */
-        .route-center-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 8px; flex: 0 0 110px; }
-        .route-arrow { color: var(--text-muted); font-size: 12px; font-weight: bold; line-height: 1; }
-        .route-amount { font-weight: 800; color: var(--accent-orange); font-size: 15px; margin-top: 2px; }
+        /* 修正：名前を挟む縦の連携ブロック */
+        .route-center-block { display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 4px 0; padding: 2px 0; }
+        .route-arrow { color: var(--text-muted); font-size: 14px; font-weight: bold; line-height: 1; }
+        .route-amount { font-weight: 800; color: var(--accent-orange); font-size: 16px; margin-top: 3px; background-color: #fff; padding: 2px 12px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
 
         .modal-overlay {
             position: fixed;
@@ -766,28 +760,29 @@
             let amount = Math.min(debtor.amount, creditor.amount);
             let finalAmt = Math.round(amount);
 
-            // 修正：中央ブロック（route-center-block）を設け、矢印の下に金額（route-amount）を美しくレイアウト
+            // 修正：完全な縦型構造へリファクタリング。名前 ➔ 矢印＆カプセル化された金額 ➔ 名前 の順で中央に一列配置
             htmlResults += `
                 <div class="route-item">
                     <div class="route-flow">
-                        <div class="route-member-block debtor">
+                        <div class="route-member-block">
                             <span class="route-user">${debtor.name}</span>
                             <span class="route-member-breakdown">${inlineStylesMap[debtor.name]}</span>
                         </div>
                         
                         <div class="route-center-block">
-                            <span class="route-arrow">➡️</span>
+                            <span class="route-arrow">↓</span>
                             <span class="route-amount">${finalAmt.toLocaleString()}円</span>
+                            <span class="route-arrow">↓</span>
                         </div>
                         
-                        <div class="route-member-block creditor">
+                        <div class="route-member-block">
                             <span class="route-user">${creditor.name}</span>
                             <span class="route-member-breakdown">${inlineStylesMap[creditor.name]}</span>
                         </div>
                     </div>
                 </div>`;
                 
-            textResults.push(`${debtor.name} ➡️ ${creditor.name} に ${finalAmt.toLocaleString()}円 支払う`);
+            textResults.push(`${debtor.name}\n  ↓ (${finalAmt.toLocaleString()}円)\n${creditor.name}`);
 
             debtor.amount -= amount;
             creditor.amount -= amount;
@@ -810,7 +805,7 @@
         lastShareText += `----------------------------\n`;
         lastShareText += textBreakdown;
         lastShareText += `----------------------------\n`;
-        lastShareText += `［送金ルート］\n`;
+        lastShareText += `［送金ルート］\n\n`;
 
         const resultDiv = document.getElementById('settlementResult');
         if (htmlResults === "") {
@@ -818,7 +813,7 @@
             lastShareText += ' 全員の精算バランスが一致しています。送金は不要です！';
         } else {
             resultDiv.innerHTML = htmlResults;
-            textResults.forEach(res => { lastShareText += ` ${res}\n`; });
+            textResults.forEach(res => { lastShareText += `${res}\n\n`; });
         }
 
         document.getElementById('resultContainer').style.display = 'block';
